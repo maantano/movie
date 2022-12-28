@@ -2,9 +2,14 @@ import React from 'react';
 
 import styled from 'styled-components/native';
 import {BlurView} from '@react-native-community/blur';
-import {makeImgPath} from '../api';
-import {StyleSheet, useColorScheme} from 'react-native';
+import {makeImgPath, Movie} from '../api';
+import {
+  StyleSheet,
+  TouchableWithoutFeedback,
+  useColorScheme,
+} from 'react-native';
 import Poster from './Poster';
+import {useNavigation} from '@react-navigation/native';
 
 const View = styled.View`
   flex: 1;
@@ -45,45 +50,59 @@ const BgImg = styled.Image`
 interface SlideProps {
   backdrop_path: string;
   poster_path: string;
-  original_title: string;
+  originalTitle: string;
   overview: string;
   vote_average: number;
+  fullData: Movie;
 }
 
 const Slide: React.FC<SlideProps> = ({
   backdrop_path,
   poster_path,
-  original_title,
+  originalTitle,
   overview,
   vote_average,
+  fullData,
 }) => {
   const imgPath = makeImgPath(backdrop_path);
 
   const isDark = useColorScheme() === 'dark';
+  const navigation = useNavigation();
+  const goToDetail = () => {
+    navigation.navigate('Stack', {
+      screen: 'Detail',
+      params: {
+        // originalTitle,
+        ...fullData,
+      },
+    });
+  };
   return (
-    <View>
-      <BgImg
-        style={StyleSheet.absoluteFill}
-        source={{uri: imgPath}}
-        // source={{uri: makeImgPath(movie.backdrop_path)}}
-      />
+    <TouchableWithoutFeedback onPress={goToDetail}>
+      <View>
+        <BgImg
+          style={StyleSheet.absoluteFill}
+          source={{uri: imgPath}}
+          // source={{uri: makeImgPath(movie.backdrop_path)}}
+        />
 
-      <BlurView
-        style={StyleSheet.absoluteFill}
-        blurType={isDark ? 'dark' : 'light'}
-        blurAmount={1}
-        reducedTransparencyFallbackColor="white"
-      />
-      <Wrapper>
-        <Poster path={poster_path} />
+        <BlurView
+          style={StyleSheet.absoluteFill}
+          blurType={isDark ? 'dark' : 'light'}
+          blurAmount={1}
+          reducedTransparencyFallbackColor="white"
+        />
+        <Wrapper>
+          <Poster path={poster_path} />
 
-        <Column>
-          <Title>{original_title}</Title>
-          <Overview>{overview.slice(0, 90)}...</Overview>
-          {vote_average > 0 ? <Votes>⭐️ {vote_average}/10</Votes> : null}
-        </Column>
-      </Wrapper>
-    </View>
+          <Column>
+            <Title>{originalTitle}</Title>
+            <Overview>{overview.slice(0, 90)}...</Overview>
+            {vote_average > 0 ? <Votes>⭐️ {vote_average}/10</Votes> : null}
+          </Column>
+        </Wrapper>
+      </View>
+    </TouchableWithoutFeedback>
   );
 };
 

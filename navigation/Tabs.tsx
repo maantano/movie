@@ -2,9 +2,9 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import React from 'react';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import Movie from '../components/Movie';
-import Video from '../components/Video';
-import Search from '../components/Search';
+import Movie from '../screens/Movie';
+import Tv from '../screens/Tv';
+import Search from '../screens/Search';
 import {useColorScheme} from 'react-native';
 import {BLACK_COLOR, DARK_GREY, LIGHT_GREY, YELLOW_COLOR} from '../color';
 
@@ -31,7 +31,7 @@ const Tabs = () => {
         },
       }}>
       <Tab.Screen name="Movie" component={Movie} />
-      <Tab.Screen name="Video" component={Video} />
+      <Tab.Screen name="Tv" component={Tv} />
       <Tab.Screen name="Search" component={Search} />
     </Tab.Navigator>
   );

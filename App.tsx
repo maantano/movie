@@ -13,7 +13,7 @@ import {useColorScheme} from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
 import {ThemeProvider} from 'styled-components/native';
 import {darkTheme, lightTheme} from './styled';
-import {QueryClient, QueryClientProvider, useQuery} from 'react-query';
+import {QueryClient, QueryClientProvider} from 'react-query';
 
 import Tabs from './navigation/Tabs';
 import Stack from './navigation/Stack';
