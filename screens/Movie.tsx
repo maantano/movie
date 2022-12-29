@@ -2,7 +2,7 @@
 /* eslint-disable react-native/no-inline-styles */
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
-import {Dimensions, ActivityIndicator, FlatList} from 'react-native';
+import {Dimensions, ActivityIndicator, FlatList, Alert} from 'react-native';
 import styled from 'styled-components/native';
 import Swiper from 'react-native-swiper';
 import {MovieResponse, moviesApi} from '../api';
@@ -59,6 +59,7 @@ const Movie: React.FC<NativeStackScreenProps> = () => {
     // isRefetching: isRefetchingTrending,
   } = useQuery<MovieResponse>(['movies', 'trending'], moviesApi.trending);
 
+  // console.log(trendingData);
   const onRefresh = async () => {
     setRefreshing(true);
     await queryClient.refetchQueries(['movies']);
@@ -98,10 +99,17 @@ const Movie: React.FC<NativeStackScreenProps> = () => {
 
   // console.log(Object.keys(nowPlayingData?.results[0]));
   // console.log(Object.values(nowPlayingData?.results[0]).map(v => typeof v));
+
+  const loadMore = () => {
+    Alert.alert('load more');
+  };
+
   return loading ? (
     <Loader />
   ) : upcomingData ? (
     <FlatList
+      onEndReached={loadMore}
+      onEndReachedThreshold={0.9}
       refreshing={refreshing}
       onRefresh={onRefresh}
       ListHeaderComponent={
@@ -131,6 +139,7 @@ const Movie: React.FC<NativeStackScreenProps> = () => {
               />
             ))}
           </Swiper>
+
           {trendingData ? (
             <HList title="Trending Movies" data={trendingData.results} />
           ) : null}

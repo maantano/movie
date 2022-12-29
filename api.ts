@@ -102,8 +102,15 @@ export const moviesApi = {
   },
   detail: ({queryKey}) => {
     const [_, id] = queryKey;
+
     return fetch(
       `${BASE_URL}/movie/${id}?api_key=${API_Key}&append_to_response=videos,images`,
+    ).then(res => res.json());
+  },
+  similar: ({queryKey}) => {
+    const [_, id] = queryKey;
+    return fetch(
+      `${BASE_URL}/movie/${id}/similar?api_key=${API_Key}&language=en-US&page=1&region=KR`,
     ).then(res => res.json());
   },
 };
@@ -146,6 +153,12 @@ export const tvApi = {
     const [_, id] = queryKey;
     return fetch(
       `${BASE_URL}/tv/${id}?api_key=${API_Key}&append_to_response=videos,images`,
+    ).then(res => res.json());
+  },
+  similar: ({queryKey}) => {
+    const [_, id] = queryKey;
+    return fetch(
+      `${BASE_URL}/tv/${id}/similar?api_key=${API_Key}&language=en-US&page=1&region=KR`,
     ).then(res => res.json());
   },
 };

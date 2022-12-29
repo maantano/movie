@@ -1,14 +1,26 @@
+// .replace(/\n|\r|\s*/g, "")
+
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useEffect} from 'react';
-import {Dimensions, StyleSheet, Linking} from 'react-native';
+import {
+  Dimensions,
+  StyleSheet,
+  Linking,
+  Share,
+  View,
+  Platform,
+} from 'react-native';
 import styled from 'styled-components/native';
-import {makeImgPath, Movie, moviesApi, TV, tvApi} from '../api';
+import {makeImgPath, Movie, moviesApi, ReviewResponse, TV, tvApi} from '../api';
 import Poster from '../components/Poster';
 import LinearGradient from 'react-native-linear-gradient';
 import {useQuery} from 'react-query';
 import Loader from '../components/Loader';
-import WebView from 'react-native-webview';
+
+import {FlatList, TouchableOpacity} from 'react-native-gesture-handler';
 import Entypo from 'react-native-vector-icons/Entypo';
+import HMedia from '../components/HMedia';
+import HList from '../components/HList';
 
 const {height: SCREEN_HEIGHT} = Dimensions.get('window');
 
@@ -44,22 +56,53 @@ const Overview = styled.Text`
 `;
 
 const VideoBtn = styled.TouchableOpacity`
+  flex-direction: row;
+`;
+const BtnText = styled.Text`
   color: white;
   font-weight: 600;
   margin-bottom: 10px;
   line-height: 24px;
   margin-left: 10px;
 `;
-const BtnText = styled.Text`
-  color: white;
+const ShareText = styled.Text`
+  color: #fff;
+  font-size: 15px;
+`;
+
+const SimilarContainer = styled.View`
+  margin-top: 20px;
+  flex-direction: row;
+`;
+const ReviewContainer = styled.View`
+  margin-left: 20px;
+  width: 90%;
+  border: 0.3px;
+  border-radius: 3px;
+  border-color: ${props => props.theme.textColor};
+`;
+const ReviewTextCon = styled.View`
+  flex-direction: row;
+  padding-left: 20px;
+  padding-top: 20px;
+`;
+const AuthorText = styled.Text`
+  color: ${props => props.theme.textColor};
+  font-size: 18px;
   font-weight: 600;
   margin-bottom: 10px;
 `;
-
-// const Detail = (props) => {
-//   console.log(props); 안에 들어있는 모든게 나옴, navigation, funtion..., 등
-// const Detail = ({navigation,...rest}) => {
-//   console.log(rest); // 파라미터 전체가 나오고
+const ReviewText = styled.Text`
+  font-size: 13px;
+  color: ${props => props.theme.textColor};
+`;
+const REviesRate = styled.Text`
+  font-size: 15px;
+  color: white;
+`;
+const HSeparator = styled.View`
+  height: 20px;
+`;
 
 type RootStackParamList = {
   Detail: Movie | TV;
@@ -80,7 +123,44 @@ const Detail: React.FC<DetailScreenProps> = ({
 }) => {
   // console.log(originalTitle);
   const isMovie = 'original_title' in params;
-  const {isLoading, data} = useQuery(
+
+  const ShareMedia = async () => {
+    // console.log(detailData);
+    const isAndroid = Platform.OS === 'android';
+    const homepage = isMovie
+      ? `https://www.imdb.com/title/${detailData.imdb_id}/`
+      : detailData.homepage;
+
+    if (isAndroid) {
+      await Share.share({
+        message: `${params.overview}\n Check it out : ${homepage}`,
+        title:
+          'original_title' in params
+            ? params.original_title
+            : params.original_name,
+      });
+    } else {
+      await Share.share({
+        // url: isMovie
+        //   ? `https://ww.imdb.com/title/${data.imdb_id}/`
+        //   : data.homepage,
+        // message: params.overview,
+        url: homepage,
+        title:
+          'original_title' in params
+            ? params.original_title
+            : params.original_name,
+      });
+    }
+  };
+
+  const ShareButton = () => (
+    <TouchableOpacity onPress={ShareMedia}>
+      <ShareText>Share</ShareText>
+    </TouchableOpacity>
+  );
+
+  const {isLoading: detailLoading, data: detailData} = useQuery(
     [isMovie ? 'movie' : 'tv', params.id],
     isMovie ? moviesApi.detail : tvApi.detail,
     // {enabled: isMovie ? 'original_title' in params : 'original_name' in params},
@@ -88,6 +168,15 @@ const Detail: React.FC<DetailScreenProps> = ({
     //origintal_title이 있으면 api를 활성화 시켜라!!
   );
 
+  // console.log(params.id);
+  const {isLoading: simliarLoading, data: similarData} = useQuery(
+    [isMovie ? 'movieSimilar' : 'tvSimilar', params.id],
+    isMovie ? moviesApi.similar : tvApi.similar,
+  );
+
+  // reviewData?.results.map(item => {
+  //   console.log(item.author_details.rating);
+  // });
   // 아래처럼 분리해서 사용 할 수 도 있고
   // const {isLoading: movieLoading, data: movieData} = useQuery(
   //   ['movies', params.id],
@@ -108,6 +197,14 @@ const Detail: React.FC<DetailScreenProps> = ({
     });
   }, []);
 
+  useEffect(() => {
+    if (detailData) {
+      setOptions({
+        headerRight: () => <ShareButton />,
+      });
+    }
+  }, [detailData]);
+
   const imgPath = makeImgPath(params.backdrop_path || '');
 
   const openYTLink = async (videoId: string) => {
@@ -123,7 +220,8 @@ const Detail: React.FC<DetailScreenProps> = ({
           start={{x: 1, y: 0}}
           end={{x: 1, y: 1}}
           colors={['transparent', '#000000']}
-          style={StyleSheet.absoluteFill}></LinearGradient>
+          style={StyleSheet.absoluteFill}
+        />
 
         <Column>
           <Poster path={params.poster_path || ''} />
@@ -136,13 +234,20 @@ const Detail: React.FC<DetailScreenProps> = ({
       </Header>
       <Data>
         <Overview>{params.overview}</Overview>
-        {isLoading ? <Loader /> : null}
-        {data?.videos?.results?.map(video => (
+        {detailLoading ? <Loader /> : null}
+        {detailData?.videos?.results.slice(0, 5)?.map(video => (
           <VideoBtn key={video.key} onPress={() => openYTLink(video.key)}>
+            <Entypo name="youtube" size={24} color="red" />
             <BtnText>{video.name}</BtnText>
           </VideoBtn>
         ))}
       </Data>
+      <SimilarContainer>
+        <HList
+          title={isMovie ? 'Similar Movies' : 'Similar TV'}
+          data={similarData?.results}
+        />
+      </SimilarContainer>
     </Container>
   );
 };
